@@ -1,13 +1,12 @@
 import math
 
 import photonlibpy.photonCamera
-
+import photonlibpy.photonPoseEstimator
 
 class Vision:
    def __init__(self):
       self.camera1 = photonlibpy.photonCamera.PhotonCamera(
-         "Camera1")  # initializes a camera using the photonlib library
-
+         "BackCamera")  # initializes a camera using the photonlib library
 
       self.CAMERA1_CAMERA_HEIGHT = 0.258  # in meters. height the camera is at
       #camera height in inches = 7.715

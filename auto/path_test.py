@@ -1,36 +1,47 @@
-
-import wpimath.controller
 import wpimath.geometry
-
 import wpimath.trajectory
-
-import robotcontainer
-
+import wpimath.controller
+from wpimath.geometry import Pose2d, Rotation2d
+from wpimath.kinematics import ChassisSpeeds
 
 class PathTest():
    def __init__(self):
-      self.robotContainer = robotcontainer.RobotContainer()
-      self.DriveTrain = self.robotContainer.drivetrain
-      # self.trajectoryConfig = wpimath.trajectory.TrajectoryConfig
 
-      pass
 
-   trajectoryConfig = wpimath.trajectory.TrajectoryConfig(
-      1,
+      self.trajectoryConfig = wpimath.trajectory.TrajectoryConfig(
+      2,
       1
-   )
+         )
 
-   path = [
+      self.path = [
       wpimath.geometry.Translation2d(0.3, 0)
 
-   ]
+      ]
 
-   trajectory = wpimath.trajectory.TrajectoryGenerator.generateTrajectory(
-      wpimath.geometry.Pose2d(0, 0, wpimath.geometry.Rotation2d(0)),
-      path,
-      wpimath.geometry.Pose2d(0.6, 0, wpimath.geometry.Rotation2d.fromDegrees(0)),
-      trajectoryConfig
-   )
-   ramseteController = wpimath.controller.RamseteController()
+      self.trajectory = wpimath.trajectory.TrajectoryGenerator.generateTrajectory(
+         wpimath.geometry.Pose2d(0, 0, wpimath.geometry.Rotation2d(0)),
+         self.path,
+         wpimath.geometry.Pose2d(0.6, 0, wpimath.geometry.Rotation2d.fromDegrees(0)),
+         self.trajectoryConfig
+      )
 
+      xKp = 0.01
+      yKp = 0.01
+      zKp = 0.01
+
+      self.xPID = wpimath.controller.PIDController(xKp,0,0)
+      self.yPID = wpimath.controller.PIDController(yKp, 0, 0)
+      self.zPID = wpimath.controller.PIDController(zKp, 0, 0)
+
+
+   """def timeToSpeeds(self,currentTime:float,currentPose:Pose2d,heading:float):
+      wantedState = self.trajectory.sample(currentTime)
+
+      wantedPose = wantedState.pose
+      x = self.xPID.calculate(currentPose.X(),wantedPose.X())
+      y = self.yPID.calculate(currentPose.Y(),wantedPose.Y())
+      z = 0 #self.zPID.calculate(currentPose.rotation().degrees(), Rotation2d.fromDegrees(heading).degrees())
+
+      return ChassisSpeeds.fromRobotRelativeSpeeds(x,y,z,Rotation2d.fromDegrees(heading))
+"""
 

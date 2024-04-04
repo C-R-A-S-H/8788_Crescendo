@@ -5,7 +5,7 @@ class Hanger():
 
    def __init__(self):
 
-      #self.compressor = wpilib.Compressor(21,wpilib.PneumaticsModuleType.REVPH)
+      self.compressor = wpilib.Compressor(21,wpilib.PneumaticsModuleType.REVPH)
 
       # DoubleSolenoid corresponds to a double solenoid.
       # In this case, it's connected to channels 1 and 2 of a PH with the default CAN ID.

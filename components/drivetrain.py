@@ -115,10 +115,10 @@ class DriveTrain():
 
       self.gyro.enableLogging(True)
 
-      frontrightlocation = Translation2d(.381, .381)
-      frontleftlocation = Translation2d(.381, -.381)
-      backleftlocation = Translation2d(-.381, -.381)
-      backrightlocation = Translation2d(-.381, .381)
+      frontrightlocation = Translation2d(.5, .5)
+      frontleftlocation = Translation2d(.5, -.5)
+      backleftlocation = Translation2d(-.5, -.5)
+      backrightlocation = Translation2d(-.5, .5)
 
       self.kinematics = SwerveDrive4Kinematics(
          frontleftlocation, frontrightlocation, backleftlocation, backrightlocation
@@ -126,8 +126,7 @@ class DriveTrain():
 
       self.odometry = SwerveDrive4Odometry(
          self.kinematics,
-         wpimath.geometry.Rotation2d(self.gyro.getYaw())
-         # wpimath.geometry.Rotation2d(0.0)
+         wpimath.geometry.Rotation2d().fromDegrees(self.gyro.getYaw())
          ,
          (
             getSwerveModPos(self.FrightEnc, self.frontRightDriveEnc),
@@ -135,9 +134,11 @@ class DriveTrain():
             getSwerveModPos(self.BrightEnc, self.backRightDriveEnc),
             getSwerveModPos(self.BleftEnc, self.backLeftDriveEnc)
          ),
-         Pose2d(5.0, 13.0, Rotation2d(0))
+         Pose2d(0, 0, Rotation2d().fromDegrees(0))
          # starting pose 5 meters against the wall 13.5 from the driver station and a heading of 0
       )
+
+
 
       print("end of init")
 
@@ -217,77 +218,8 @@ class DriveTrain():
       self.backLeftRotation.set(BLOutput)
       self.backRightRotation.set(BROutput)
 
-   def Defense(self, Enable: bool):
-      if Enable == True:
-         newAngle = self.angleToEncTics(230)
 
-         FLnewState = self.optimize(0, newAngle, self.FleftEnc.get_absolute_position().value)
-         FRnewState = self.optimize(0, 360 - newAngle, self.FrightEnc.get_absolute_position().value)
-         BLnewState = self.optimize(0, 360 - newAngle, self.BleftEnc.get_absolute_position().value)
-         BRnewState = self.optimize(0, newAngle, self.BrightEnc.get_absolute_position().value)
 
-         FLnewSteerAngle = FLnewState[1]
-         FRnewSteerAngle = FRnewState[1]
-         BLnewSteerAngle = BLnewState[1]
-         BRnewSteerAngle = BRnewState[1]
-
-         FLOutput = self.FleftPID.calculate(self.FleftEnc.get_absolute_position().value, FLnewSteerAngle)
-         FROutput = self.FrightPID.calculate(self.FrightEnc.get_absolute_position().value, FRnewSteerAngle)
-         BLOutput = self.BleftPID.calculate(self.BleftEnc.get_absolute_position().value, BLnewSteerAngle)
-         BROutput = self.BrightPID.calculate(self.BrightEnc.get_absolute_position().value, BRnewSteerAngle)
-
-         self.frontLeftRotation.set(-FLOutput)
-         self.frontRightRotation.set(-FROutput)
-         self.backLeftRotation.set(BLOutput)
-         self.backRightRotation.set(-BROutput)
-
-   def SetSwivelDirection(self, angle):
-      # sets the new requested states of the swivels
-
-      newAngle = self.angleToEncTics(angle)
-
-      FLnewState = self.optimize(0, newAngle, self.FleftEnc.get_absolute_position().value)
-      FRnewState = self.optimize(0, newAngle, self.FrightEnc.get_absolute_position().value)
-      BLnewState = self.optimize(0, newAngle, self.BleftEnc.get_absolute_position().value)
-      BRnewState = self.optimize(0, newAngle, self.BrightEnc.get_absolute_position().value)
-
-      FLnewSteerAngle = FLnewState[1]
-      FRnewSteerAngle = FRnewState[1]
-      BLnewSteerAngle = BLnewState[1]
-      BRnewSteerAngle = BRnewState[1]
-
-      FLOutput = self.FleftPID.calculate(self.FleftEnc.get_absolute_position().value, FLnewSteerAngle)
-      FROutput = self.FrightPID.calculate(self.FrightEnc.get_absolute_position().value, FRnewSteerAngle)
-      BLOutput = self.BleftPID.calculate(self.BleftEnc.get_absolute_position().value, BLnewSteerAngle)
-      BROutput = self.BrightPID.calculate(self.BrightEnc.get_absolute_position().value, BRnewSteerAngle)
-
-      self.frontLeftRotation.set(FLOutput)
-      self.frontRightRotation.set(FROutput)
-      self.backLeftRotation.set(BLOutput)
-      self.backRightRotation.set(BROutput)
-
-   def DriveTrainMoveByEncVert(self, distance: float, speed: float):
-      """
-      Moves the robot vertically
-      :param distance: Distance for the robot to move
-      :param speed: Speed at Which the robot will move in
-      :return:
-      """
-      pass
-
-   def DriveTrainMoveByEncHorizontal(self, distance: float, speed: float, direction: str):
-      """
-      Moves the robot Horizontally
-      :param distance: Distance for the robot to move
-      :param speed: Speed at Which the robot will move
-      :param direction: Left or Right
-      :return:
-      """
-      pass
-
-   def DriveTrainMoveByEncSpline(self, distance: float, speed: float):  # dont work on this yet
-
-      pass
 
    def optimize(self, drive_voltage, steer_angle, current_angle):
       delta = steer_angle - current_angle

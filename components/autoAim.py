@@ -6,12 +6,7 @@ class AutoAim():
 
       self.Eyes = robotcontainer.Vision()
       self.pitch = 0
-
-   def Aim(self):
-      """
-      Aims the arm towards the optimal angle to have automatic shooting
-      :return: speed for motors to spin relative to the distance
-      """
+   def printDistance(self):
       results = self.Eyes.getResults()
       if results.hasTargets():
          target = results.targets
@@ -26,14 +21,37 @@ class AutoAim():
          if self.pitch != 0:
             distance = self.Eyes.GetDistanceFromSpeaker(self.pitch)
             # distance to arm encoder stuff
+            print(distance)
+
+   def Aim(self):
+      """
+      Aims the arm towards the optimal angle to have automatic shooting
+      :return: speed for motors to spin relative to the distance
+      """
+      results = self.Eyes.getResults()
+      if results.hasTargets():
+         target = results.targets
+         for i in target:
+
+            if i.getFiducialId() == 3 or i.getFiducialId() == 7:
+               self.id = i.getFiducialId()
+               self.pitch = i.getPitch()
+
+            else:
+               self.pitch = 0
+               return (0.1,36)
+
+         if self.pitch != 0:
+            distance = self.Eyes.GetDistanceFromSpeaker(self.pitch)
+            # distance to arm encoder stuff
 
 
-            return (self.scale_number(distance, 0.6, 1, 1, 14/3),self.scale_number(distance,12.4,36,1,14/3))#where the arm needs to be aimed
+            return (self.scale_number(distance, 0.6, 1, 1, 14/3),self.scale_number(distance,36,23.6,1, 2.4))#MIN 36   MAX 23.6
          else:
             print("No tag")
             pass
       else:
-         return (0.1,0)
+         return (0.1,36)
          pass
 
    def DistanceToAngle(self, distance: float):

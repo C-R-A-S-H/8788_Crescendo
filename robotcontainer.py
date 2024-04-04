@@ -7,6 +7,7 @@ from components.physics import Physics
 from components.shooter import shooter
 from components.state_handler import StateHandler
 from components.vision import Vision
+from auto.path_test import PathTest
 
 
 class RobotContainer:
@@ -18,7 +19,7 @@ class RobotContainer:
       self.hanger = Hanger()
       self.shooter = shooter()
       self.arm = Arm()
-      self.ThreeNote = ThreeNote("nah id win", True, self.drivetrain)
+      self.auto = PathTest()
 
    def getAutoCommand(self):
       # return self.drivetrain.getAutonomousCommand()

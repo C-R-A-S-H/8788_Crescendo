@@ -28,7 +28,7 @@ class MyRobot(wpilib.TimedRobot):
       self.driver1 = wpilib.Joystick(0)
       self.driver2 = wpilib.Joystick(1)
       # self.joystickPS5 = wpilib.PS5Controller(0)
-      board = wpilib.shuffleboard.Shuffleboard
+
       self.state = State('Disabled')
 
    def disabledPeriodic(self):
@@ -44,11 +44,7 @@ class MyRobot(wpilib.TimedRobot):
 
       self.robotContainer = RobotContainer()
       self.drivetrain = self.robotContainer.drivetrain
-      #self.auto = self.robotContainer.ThreeNote
-
-
-
-      # self.path_test = self.robotContainer.path_test
+      #self.auto = self.robotContainer.auto
 
       self.hanger = self.robotContainer.hanger
 
@@ -77,7 +73,7 @@ class MyRobot(wpilib.TimedRobot):
       self.shooter_power = 0
       self.intake_speed = 0
 
-      #self.autoAim = self.robotContainer.auto_aim
+      self.autoAim = self.robotContainer.auto_aim
 
       self.drivetrain.gyro.zeroYaw()
    def autonomousInit(self):
@@ -85,37 +81,25 @@ class MyRobot(wpilib.TimedRobot):
       self.Time = wpilib.Timer()
       self.Time.start()
 
-      self.AutoSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(0, 0, 0,
-                                                              Rotation2d.fromDegrees(self.drivetrain.getGyro()))
+      self.drivetrain.updateOdometry()
 
       self.shoot_speed_auto = 0
       self.intake_speed_auto = 0
       self.aiming_pose = 0
 
+
+
    def autonomousPeriodic(self):
       currentTime = self.Time.get()
-      # aim and Shoot here
-      if currentTime < 2:
-         self.armPos = 40
-         self.shooter_power = -1
-      elif currentTime < 2.4:
-         self.intake_speed = 0.3
 
-      elif currentTime < 2.8:
-         self.armPos = 64.66
-         self.shooter_power = 0
+      #speeds = self.auto.timeToSpeeds(currentTime,self.drivetrain.odometry,self.drivetrain.gyro.getAngle())
 
-      else:
-         self.AutoSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(0, 0, 0,
-                                                                 Rotation2d.fromDegrees(self.drivetrain.getGyro()))
-         self.drivetrain.driveFromChassisSpeeds(self.AutoSpeeds)
-         self.intake_speed = 0
-         self.shooter_power = 0
-         self.armPos = 12.4
-      # fucntions for setting arm poses and shooter speeds
-      self.arm.moveToEncoderPos(self.armPos)
-      self.Shooter.Outtake(self.shooter_power)
-      self.Shooter.SetIntakePower(self.intake_speed)
+      #self.drivetrain.driveFromChassisSpeeds(speeds)
+
+      #self.drivetrain.updateOdometry()
+
+
+
 
    def teleopInit(self):
       """This function is called once each time the robot enters teleoperated mode."""
@@ -127,7 +111,7 @@ class MyRobot(wpilib.TimedRobot):
       self.shooter_power = 0
 
    def teleopPeriodic(self):
-      #self.aimNum = self.autoAim.Aim()
+      self.aimNum = self.autoAim.Aim()
       """This function is called periodically during teleoperated mode."""
       xspeed = self.driver1.getX()
       yspeed = self.driver1.getY()
@@ -163,6 +147,11 @@ class MyRobot(wpilib.TimedRobot):
                                                         self.yaw))  # calculates power given to the motors depending on the user inputs
       self.drivetrain.driveFromChassisSpeeds(speeds)
 
+      #print(self.drivetrain.odometry.getPose())
+
+      print(self.drivetrain.odometry.getPose())
+
+
       #self.armPos = self.driver2.getY() * 50
 
       #if abs(self.armPos) < .10:
@@ -181,37 +170,38 @@ class MyRobot(wpilib.TimedRobot):
          self.shooter_power = -0.1
 
       elif self.driver2.getRawButtonPressed(12):
-         #self.armPos = self.aimNum[1]
+         self.armPos = float(self.aimNum[1])
          self.shooter_power = -1
-         self.armPos = 40
+         #self.armPos = 40
 
       self.Shooter.fancy_intake(self.driver2.getRawButtonPressed(5), False,
                                 self.driver2.getRawButtonPressed(3))
 
       if self.driver2.getTrigger():
-         self.Shooter.Outtake(self.shooter_power
-         #self.aimNum[0]
-         )
+         self.Shooter.Outtake(self.shooter_power)
 
       else:
          self.Shooter.Outtake(0)
 
       self.hanger.DeployHang(self.driver2.getRawButton(4),self.driver2.getRawButton(6))
 
-      # self.AutoAim.Aim()
+      #self.AutoAim.Aim()
 
    def testInit(self):
       # on test init
       pass
 
    def testPeriodic(self):
-      print(self.arm.getArmPosition())
+      print(self.drivetrain.odometry.getPose())
+      #print(self.arm.getArmPosition())
       pass
 
    def robotPeriodic(self):
       # while the robot is on
       # print(self.drivetrain.odometry.getPose())
       self.yaw = -self.drivetrain.gyro.getAngle()
+
+
 
 
 
