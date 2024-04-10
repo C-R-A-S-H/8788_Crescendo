@@ -76,7 +76,7 @@ class DriveTrain():
 
       self.lastChassisSpeed = ChassisSpeeds(0, 0, 0)
 
-      RotKp = 1.5  #
+      RotKp = 1.5  #was 1.5
       RotKi = 0
       RotKd = 0
       self.BleftPID = controller.PIDController(RotKp, RotKi, RotKd)
@@ -115,10 +115,10 @@ class DriveTrain():
 
       self.gyro.enableLogging(True)
 
-      frontrightlocation = Translation2d(.5, .5)
-      frontleftlocation = Translation2d(.5, -.5)
-      backleftlocation = Translation2d(-.5, -.5)
-      backrightlocation = Translation2d(-.5, .5)
+      frontrightlocation = Translation2d(0.5, 0.5)#0.5 ,0.5
+      frontleftlocation = Translation2d(-0.5, 0.5)#0.5 ,-0.5
+      backleftlocation = Translation2d(-0.5, -0.75)#-0.5 ,-0.75
+      backrightlocation = Translation2d(0.5, -0.75)#-0.5, 0.75
 
       self.kinematics = SwerveDrive4Kinematics(
          frontleftlocation, frontrightlocation, backleftlocation, backrightlocation
@@ -162,7 +162,7 @@ class DriveTrain():
 
    def updateOdometry(self) -> None:
       self.odometry.update(
-         wpimath.geometry.Rotation2d(self.gyro.getYaw())
+         wpimath.geometry.Rotation2d().fromDegrees(self.gyro.getYaw())
          ,
          (
             getSwerveModPos(self.FrightEnc, self.frontRightDriveEnc),
@@ -171,7 +171,18 @@ class DriveTrain():
             getSwerveModPos(self.BleftEnc, self.backLeftDriveEnc)
          )
       )
-
+   def resetOdometry(self):
+      self.odometry.resetPosition(
+         wpimath.geometry.Rotation2d().fromDegrees(self.gyro.getYaw())
+         ,
+         (
+            getSwerveModPos(self.FrightEnc, self.frontRightDriveEnc),
+            getSwerveModPos(self.FleftEnc, self.frontLeftDriveEnc),
+            getSwerveModPos(self.BrightEnc, self.backRightDriveEnc),
+            getSwerveModPos(self.BleftEnc, self.backLeftDriveEnc)
+         ),
+         Pose2d(0,0,Rotation2d.fromDegrees(0))
+                                   )
    def periodic(self) -> None:
       self.updateOdometry()
 
@@ -249,16 +260,16 @@ class DriveTrain():
                                                       Rotation2d(
                                                          ticks2rad(self.BrightEnc.get_absolute_position()._value)))
 
-      self.backLeftRotation.set(-self.BleftPID.calculate(self.BleftEnc.get_absolute_position()._value,
+      self.backLeftRotation.set(-self.BleftPID.calculate(self.BleftEnc.get_absolute_position()._value,#was negative
                                                          lratio(backLeftOptimized.angle.radians())))
       self.frontLeftRotation.set(self.FleftPID.calculate(self.FleftEnc.get_absolute_position()._value,
                                                          lratio(frontLeftOptimized.angle.radians())))
-      self.backRightRotation.set(-self.BrightPID.calculate(self.BrightEnc.get_absolute_position()._value,
+      self.backRightRotation.set(-self.BrightPID.calculate(self.BrightEnc.get_absolute_position()._value,#was negative
                                                            lratio(backRightOptimized.angle.radians())))
-      self.frontRightRotation.set(-self.FrightPID.calculate(self.FrightEnc.get_absolute_position()._value,
+      self.frontRightRotation.set(-self.FrightPID.calculate(self.FrightEnc.get_absolute_position()._value,#was negative
                                                             lratio(frontRightOptimized.angle.radians())))
 
-      self.backLeftDrive.set(-backLeftOptimized.speed)
+      self.backLeftDrive.set(backLeftOptimized.speed)#was negative
       self.backRightDrive.set(backRightOptimized.speed)
       self.frontLeftDrive.set(frontLeftOptimized.speed)
       self.frontRightDrive.set(frontRightOptimized.speed)

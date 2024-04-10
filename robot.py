@@ -5,7 +5,6 @@ import wpilib.shuffleboard
 from wpimath.geometry import Rotation2d
 from wpimath.kinematics import ChassisSpeeds
 
-
 from robotcontainer import RobotContainer
 
 
@@ -28,6 +27,8 @@ class MyRobot(wpilib.TimedRobot):
       self.driver1 = wpilib.Joystick(0)
       self.driver2 = wpilib.Joystick(1)
       # self.joystickPS5 = wpilib.PS5Controller(0)
+      self.toggle = True
+      self.amp_toggle = False
 
       self.state = State('Disabled')
 
@@ -44,7 +45,7 @@ class MyRobot(wpilib.TimedRobot):
 
       self.robotContainer = RobotContainer()
       self.drivetrain = self.robotContainer.drivetrain
-      #self.auto = self.robotContainer.auto
+      self.auto = self.robotContainer.auto
 
       self.hanger = self.robotContainer.hanger
 
@@ -76,30 +77,26 @@ class MyRobot(wpilib.TimedRobot):
       self.autoAim = self.robotContainer.auto_aim
 
       self.drivetrain.gyro.zeroYaw()
+
    def autonomousInit(self):
       """This function is run once each time the robot enters autonomous mode."""
       self.Time = wpilib.Timer()
       self.Time.start()
 
-      self.drivetrain.updateOdometry()
+      self.drivetrain.resetOdometry()
 
       self.shoot_speed_auto = 0
       self.intake_speed_auto = 0
       self.aiming_pose = 0
 
-
-
    def autonomousPeriodic(self):
       currentTime = self.Time.get()
 
-      #speeds = self.auto.timeToSpeeds(currentTime,self.drivetrain.odometry,self.drivetrain.gyro.getAngle())
+      speeds = self.auto.timeToSpeeds(currentTime,self.drivetrain.odometry.getPose(),self.drivetrain.gyro.getAngle())
 
-      #self.drivetrain.driveFromChassisSpeeds(speeds)
+      self.drivetrain.driveFromChassisSpeeds(speeds)
 
-      #self.drivetrain.updateOdometry()
-
-
-
+      self.arm.moveToEncoderPos(self.aiming_pose)
 
    def teleopInit(self):
       """This function is called once each time the robot enters teleoperated mode."""
@@ -122,7 +119,7 @@ class MyRobot(wpilib.TimedRobot):
       if self.driver1.getTrigger():
          tspeed = self.driver1.getZ()
       else:
-         tspeed = 0#self.drivetrain.align()
+         tspeed = 0  # self.drivetrain.align()
 
       if abs(xspeed) < .15:  # applies  a deadzone to the joystick
          xspeed = 0
@@ -142,20 +139,19 @@ class MyRobot(wpilib.TimedRobot):
 
       # speeds = ChassisSpeeds.fromFieldRelativeSpeeds(-yspeed * 0.5, xspeed * 0.5, tspeed * 0.5, Rotation2d(0.0))
 
-      speeds = ChassisSpeeds.fromRobotRelativeSpeeds(yspeed * self.slow, -xspeed * self.slow, -tspeed * 0.8,
+      speeds = ChassisSpeeds.fromRobotRelativeSpeeds(yspeed * self.slow, -xspeed * self.slow, tspeed * 0.8,
                                                      Rotation2d().fromDegrees(
                                                         self.yaw))  # calculates power given to the motors depending on the user inputs
       self.drivetrain.driveFromChassisSpeeds(speeds)
 
-      #print(self.drivetrain.odometry.getPose())
+      # print(self.drivetrain.odometry.getPose())
 
       print(self.drivetrain.odometry.getPose())
 
+      # self.armPos = self.driver2.getY() * 50
 
-      #self.armPos = self.driver2.getY() * 50
-
-      #if abs(self.armPos) < .10:
-         #self.armPos = 0
+      # if abs(self.armPos) < .10:
+      # self.armPos = 0
 
       if self.driver2.getRawButtonPressed(10):
          self.armPos = 64.66  # on starting intake moves to intake pos
@@ -163,16 +159,28 @@ class MyRobot(wpilib.TimedRobot):
 
       self.arm.moveToEncoderPos(self.armPos)
 
-      #self.arm.moveToPosition(self.armPos)
+      # self.arm.moveToPosition(self.armPos)
 
+
+      # elif self.driver2.getRawButtonPressed(12):
+      # self.armPos = float(self.aimNum[1])
+      # self.shooter_power = -1
+      # self.armPos = 40
       if self.driver2.getRawButtonPressed(11):
-         self.armPos = 0
-         self.shooter_power = -0.1
+         self.amp_toggle = not self.amp_toggle
 
-      elif self.driver2.getRawButtonPressed(12):
+      if self.driver2.getRawButtonPressed(12):
+         self.toggle = not self.toggle
+         if self.amp_toggle:
+            self.amp_toggle = not self.amp_toggle
+
+      if self.toggle:
          self.armPos = float(self.aimNum[1])
          self.shooter_power = -1
-         #self.armPos = 40
+      elif self.amp_toggle:
+         self.armPos = 0
+      else:
+         self.armPos = 64.66
 
       self.Shooter.fancy_intake(self.driver2.getRawButtonPressed(5), False,
                                 self.driver2.getRawButtonPressed(3))
@@ -183,9 +191,9 @@ class MyRobot(wpilib.TimedRobot):
       else:
          self.Shooter.Outtake(0)
 
-      self.hanger.DeployHang(self.driver2.getRawButton(4),self.driver2.getRawButton(6))
+      self.hanger.DeployHang(self.driver2.getRawButton(4), self.driver2.getRawButton(6))
 
-      #self.AutoAim.Aim()
+      # self.AutoAim.Aim()
 
    def testInit(self):
       # on test init
@@ -193,17 +201,13 @@ class MyRobot(wpilib.TimedRobot):
 
    def testPeriodic(self):
       print(self.drivetrain.odometry.getPose())
-      #print(self.arm.getArmPosition())
+      # print(self.arm.getArmPosition())
       pass
 
    def robotPeriodic(self):
       # while the robot is on
       # print(self.drivetrain.odometry.getPose())
       self.yaw = -self.drivetrain.gyro.getAngle()
-
-
-
-
 
 
 if __name__ == "__main__":

@@ -42,7 +42,7 @@ class shooter():
          self.Intake.set(-0.1)
       elif self.stop == False :
 
-         self.Intake.set(0.3)
+         self.Intake.set(0.6)
          if stop:
             self.stop = True
             self.Intake.set(0)
