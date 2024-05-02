@@ -76,9 +76,9 @@ class DriveTrain():
 
       self.lastChassisSpeed = ChassisSpeeds(0, 0, 0)
 
-      RotKp = 1.5  #was 1.5
+      RotKp = 2# was 1.5
       RotKi = 0
-      RotKd = 0
+      RotKd = 0.1
       self.BleftPID = controller.PIDController(RotKp, RotKi, RotKd)
       self.BleftPID.enableContinuousInput(-0.5, 0.5)
       self.BleftPID.setSetpoint(0.0)
@@ -88,7 +88,7 @@ class DriveTrain():
       self.FleftPID = controller.PIDController(RotKp, RotKi, RotKd)
       self.FleftPID.enableContinuousInput(-0.5, 0.5)
       self.FleftPID.setSetpoint(0.0)
-      self.FrightPID = controller.PIDController(RotKp, RotKi, RotKd)
+      self.FrightPID = controller.PIDController(RotKp, RotKi, RotKd + -0.1)
       self.FrightPID.enableContinuousInput(-0.5, 0.5)
       self.FrightPID.setSetpoint(0.0)
 
@@ -115,10 +115,10 @@ class DriveTrain():
 
       self.gyro.enableLogging(True)
 
-      frontrightlocation = Translation2d(0.5, 0.5)#0.5 ,0.5
-      frontleftlocation = Translation2d(-0.5, 0.5)#0.5 ,-0.5
-      backleftlocation = Translation2d(-0.5, -0.75)#-0.5 ,-0.75
-      backrightlocation = Translation2d(0.5, -0.75)#-0.5, 0.75
+      frontrightlocation = Translation2d(-2.08, -2.08)  # 0.5 ,0.5, p, p
+      frontleftlocation = Translation2d(-2.08, 2.08)  # 0.5 ,-0.5 n,p
+      backleftlocation = Translation2d(2.08, 2.75)  # -0.5 ,-0.75 n, n
+      backrightlocation = Translation2d(2.08, -2.75)  # -0.5, 0.75 p, n
 
       self.kinematics = SwerveDrive4Kinematics(
          frontleftlocation, frontrightlocation, backleftlocation, backrightlocation
@@ -137,8 +137,6 @@ class DriveTrain():
          Pose2d(0, 0, Rotation2d().fromDegrees(0))
          # starting pose 5 meters against the wall 13.5 from the driver station and a heading of 0
       )
-
-
 
       print("end of init")
 
@@ -171,6 +169,7 @@ class DriveTrain():
             getSwerveModPos(self.BleftEnc, self.backLeftDriveEnc)
          )
       )
+
    def resetOdometry(self):
       self.odometry.resetPosition(
          wpimath.geometry.Rotation2d().fromDegrees(self.gyro.getYaw())
@@ -181,8 +180,9 @@ class DriveTrain():
             getSwerveModPos(self.BrightEnc, self.backRightDriveEnc),
             getSwerveModPos(self.BleftEnc, self.backLeftDriveEnc)
          ),
-         Pose2d(0,0,Rotation2d.fromDegrees(0))
-                                   )
+         Pose2d(0, 0, Rotation2d.fromDegrees(0))
+      )
+
    def periodic(self) -> None:
       self.updateOdometry()
 
@@ -198,39 +198,15 @@ class DriveTrain():
 
       return self.scale_number(angle, 0, 360, -0.5, 0.99973)
 
+   def ticksToAngle(self, ticks: float):
+      return self.scale_number(ticks, -0.5, 0.99973, 0, 360)
+
    def scale_number(self, unscaled, to_min, to_max, from_min, from_max):
       """
       scales numbers using some cool math with other stuff
 
       """
       return (to_max - to_min) * (unscaled - from_min) / (from_max - from_min) + to_min
-
-   def TurnSwivelPos(self):
-
-      newAngle = self.angleToEncTics(45)
-
-      FLnewState = self.optimize(0, newAngle, self.FleftEnc.get_absolute_position().value)
-      FRnewState = self.optimize(0, 360 - newAngle, self.FrightEnc.get_absolute_position().value)
-      BLnewState = self.optimize(0, 360 - newAngle, self.BleftEnc.get_absolute_position().value)
-      BRnewState = self.optimize(0, newAngle, self.BrightEnc.get_absolute_position().value)
-
-      FLnewSteerAngle = FLnewState[1]
-      FRnewSteerAngle = FRnewState[1]
-      BLnewSteerAngle = BLnewState[1]
-      BRnewSteerAngle = BRnewState[1]
-
-      FLOutput = self.FleftPID.calculate(self.FleftEnc.get_absolute_position().value, FLnewSteerAngle)
-      FROutput = self.FrightPID.calculate(self.FrightEnc.get_absolute_position().value, FRnewSteerAngle)
-      BLOutput = self.BleftPID.calculate(self.BleftEnc.get_absolute_position().value, BLnewSteerAngle)
-      BROutput = self.BrightPID.calculate(self.BrightEnc.get_absolute_position().value, BRnewSteerAngle)
-
-      self.frontLeftRotation.set(FLOutput)
-      self.frontRightRotation.set(FROutput)
-      self.backLeftRotation.set(BLOutput)
-      self.backRightRotation.set(BROutput)
-
-
-
 
    def optimize(self, drive_voltage, steer_angle, current_angle):
       delta = steer_angle - current_angle
@@ -260,16 +236,18 @@ class DriveTrain():
                                                       Rotation2d(
                                                          ticks2rad(self.BrightEnc.get_absolute_position()._value)))
 
-      self.backLeftRotation.set(-self.BleftPID.calculate(self.BleftEnc.get_absolute_position()._value,#was negative
+      self.backLeftRotation.set(-self.BleftPID.calculate(self.BleftEnc.get_absolute_position()._value,  # was negative
                                                          lratio(backLeftOptimized.angle.radians())))
       self.frontLeftRotation.set(self.FleftPID.calculate(self.FleftEnc.get_absolute_position()._value,
                                                          lratio(frontLeftOptimized.angle.radians())))
-      self.backRightRotation.set(-self.BrightPID.calculate(self.BrightEnc.get_absolute_position()._value,#was negative
+      self.backRightRotation.set(-self.BrightPID.calculate(self.BrightEnc.get_absolute_position()._value,
+                                                           # was negative
                                                            lratio(backRightOptimized.angle.radians())))
-      self.frontRightRotation.set(-self.FrightPID.calculate(self.FrightEnc.get_absolute_position()._value,#was negative
+      self.frontRightRotation.set(-self.FrightPID.calculate(self.FrightEnc.get_absolute_position()._value,
+                                                            # was negative
                                                             lratio(frontRightOptimized.angle.radians())))
 
-      self.backLeftDrive.set(backLeftOptimized.speed)#was negative
+      self.backLeftDrive.set(-backLeftOptimized.speed)  # was negative
       self.backRightDrive.set(backRightOptimized.speed)
       self.frontLeftDrive.set(frontLeftOptimized.speed)
       self.frontRightDrive.set(frontRightOptimized.speed)

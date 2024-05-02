@@ -55,21 +55,6 @@ class MyRobot(wpilib.TimedRobot):
 
       self.Shooter = self.robotContainer.shooter
 
-      self.BleftRotation = self.robotContainer.drivetrain.backLeftRotation
-      self.FleftRotation = self.robotContainer.drivetrain.frontLeftRotation
-      self.BrightRotation = self.robotContainer.drivetrain.backRightRotation
-      self.FrightRotation = self.robotContainer.drivetrain.frontRightRotation
-
-      self.BleftPID = self.robotContainer.drivetrain.BleftPID
-      self.FleftPID = self.robotContainer.drivetrain.FleftPID
-      self.BrightPID = self.robotContainer.drivetrain.BrightPID
-      self.FrightPID = self.robotContainer.drivetrain.FrightPID
-
-      self.BleftEnc = self.robotContainer.drivetrain.BleftEnc
-      self.FleftEnc = self.robotContainer.drivetrain.FleftEnc
-      self.BrightEnc = self.robotContainer.drivetrain.BrightEnc
-      self.FrightEnc = self.robotContainer.drivetrain.FrightEnc
-
       self.armPos = -0.48
       self.shooter_power = 0
       self.intake_speed = 0
@@ -83,20 +68,21 @@ class MyRobot(wpilib.TimedRobot):
       self.Time = wpilib.Timer()
       self.Time.start()
 
-      self.drivetrain.resetOdometry()
+      #self.drivetrain.resetOdometry()
 
-      self.shoot_speed_auto = 0
-      self.intake_speed_auto = 0
-      self.aiming_pose = 0
+      self.IntakeSpeed = 0
+      self.armPos = 0
+      self.shooter_power = 0
 
    def autonomousPeriodic(self):
-      currentTime = self.Time.get()
-
-      speeds = self.auto.timeToSpeeds(currentTime,self.drivetrain.odometry.getPose(),self.drivetrain.gyro.getAngle())
-
+      speeds = self.auto.timeToSpeeds(self.Time.get(),self.drivetrain.odometry.getPose(),Rotation2d().fromDegrees(-self.yaw).degrees())
       self.drivetrain.driveFromChassisSpeeds(speeds)
+      print(f"Time: {self.Time.get}, Odo Pose: {self.drivetrain.odometry.getPose()}, Heading: {Rotation2d().fromDegrees(self.yaw)}")
 
-      self.arm.moveToEncoderPos(self.aiming_pose)
+
+      self.arm.moveToEncoderPos(self.armPos)
+      self.Shooter.Outtake(self.shooter_power)
+      self.Shooter.SetIntakePower(self.IntakeSpeed)
 
    def teleopInit(self):
       """This function is called once each time the robot enters teleoperated mode."""
@@ -140,9 +126,11 @@ class MyRobot(wpilib.TimedRobot):
       # speeds = ChassisSpeeds.fromFieldRelativeSpeeds(-yspeed * 0.5, xspeed * 0.5, tspeed * 0.5, Rotation2d(0.0))
 
       speeds = ChassisSpeeds.fromRobotRelativeSpeeds(yspeed * self.slow, -xspeed * self.slow, tspeed * 0.8,
-                                                     Rotation2d().fromDegrees(
-                                                        self.yaw))  # calculates power given to the motors depending on the user inputs
+                                                    Rotation2d().fromDegrees(
+                                                       self.yaw))  # calculates power given to the motors depending on the user inputs
       self.drivetrain.driveFromChassisSpeeds(speeds)
+      #self.drivetrain.newDrive(speeds)
+
 
       # print(self.drivetrain.odometry.getPose())
 

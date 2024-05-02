@@ -40,7 +40,9 @@ class PathTest():
       wantedPose = wantedState.pose
       x = self.xPID.calculate(currentPose.X(),wantedPose.X())
       y = self.yPID.calculate(currentPose.Y(),wantedPose.Y())
-      z = self.zPID.calculate(currentPose.rotation().degrees(), Rotation2d().fromDegrees(heading).degrees())
+
+      z = self.zPID.calculate(heading, wantedPose.rotation().degrees())
+
 
       return ChassisSpeeds.fromRobotRelativeSpeeds(x,-y,z,Rotation2d().fromDegrees(heading))
 

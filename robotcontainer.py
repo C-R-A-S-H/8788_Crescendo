@@ -10,6 +10,7 @@ from components.vision import Vision
 from auto.path_test import PathTest
 
 
+
 class RobotContainer:
    def __init__(self) -> None:
       self.drivetrain = DriveTrain()
